@@ -99,7 +99,7 @@ data "template_file" "bucket_policy" {
   template = "${file("bucket_policy.json")}"
 
   vars {
-    origin_access_identity_arn = "${aws_cloudfront_origin_access_identity.origin_access_identity.cloudfront_access_identity_path}"
+    origin_access_identity_arn = "${aws_cloudfront_origin_access_identity.origin_access_identity.iam_arn}"
     bucket                     = "${aws_s3_bucket.www_site.arn}"
   }
 }
@@ -124,7 +124,7 @@ resource "aws_s3_bucket" "www_site" {
 
 resource "aws_route53_record" "www_site" {
   zone_id = "${data.aws_route53_zone.external.zone_id}"
-  name    = "$www.${var.site-name}"
+  name    = "www.${var.site-name}"
   type    = "A"
 
   alias {
