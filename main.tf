@@ -46,10 +46,12 @@ resource "aws_cloudfront_origin_access_identity" "origin_access_identity" {
 }
 
 resource "aws_cloudfront_distribution" "website_cdn" {
-  enabled      = true
-  price_class  = "PriceClass_All"
-  http_version = "http2"
-  aliases      = ["www.${var.site-name}"]
+  enabled          = true
+  price_class      = "PriceClass_All"
+  http_version     = "http2"
+  retain_on_delete = true
+  aliases          = ["www.${var.site-name}"]
+  comment          = "Managed by Terraform"
 
   origin {
     origin_id   = "origin-bucket-${aws_s3_bucket.www_site.id}"
@@ -90,7 +92,7 @@ resource "aws_cloudfront_distribution" "website_cdn" {
   }
 
   viewer_certificate {
-    acm_certificate_arn = "${aws_acm_certificate.cert.arn}"
+    acm_certificate_arn = "${aws_acm_certificate_validation.default.certificate_arn}"
     ssl_support_method  = "sni-only"
   }
 }
@@ -110,7 +112,8 @@ resource "aws_s3_bucket_policy" "my_bucket_policy" {
 }
 
 resource "aws_s3_bucket" "www_site" {
-  bucket = "www.${var.site-name}"
+  bucket        = "www.${var.site-name}"
+  force_destroy = true
 
   logging {
     target_bucket = "${aws_s3_bucket.logs.bucket}"
