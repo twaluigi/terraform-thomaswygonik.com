@@ -15,12 +15,12 @@ resource "aws_s3_bucket" "logs" {
 
 resource "aws_acm_certificate" "cert" {
   provider          = "aws.us-east-1"
-  domain_name       = "www.${var.site-name}"
+  domain_name       = "${var.site-name}"
   validation_method = "DNS"
 }
 
 data "aws_route53_zone" "external" {
-  name         = "tomwygonik.com"
+  name         = "${var.hosted-zone-name}"
   private_zone = false
 }
 
@@ -50,12 +50,12 @@ resource "aws_cloudfront_distribution" "website_cdn" {
   price_class      = "PriceClass_All"
   http_version     = "http2"
   retain_on_delete = true
-  aliases          = ["www.${var.site-name}"]
+  aliases          = ["${var.site-name}"]
   comment          = "Managed by Terraform"
 
   origin {
-    origin_id   = "origin-bucket-${aws_s3_bucket.www_site.id}"
-    domain_name = "www.${var.site-name}.s3.${var.region}.amazonaws.com"
+    origin_id   = "origin-bucket-${aws_s3_bucket.site.id}"
+    domain_name = "${var.site-name}.s3.${var.region}.amazonaws.com"
 
     s3_origin_config {
       origin_access_identity = "${aws_cloudfront_origin_access_identity.origin_access_identity.cloudfront_access_identity_path}"
@@ -67,7 +67,7 @@ resource "aws_cloudfront_distribution" "website_cdn" {
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "origin-bucket-${aws_s3_bucket.www_site.id}"
+    target_origin_id = "origin-bucket-${aws_s3_bucket.site.id}"
 
     min_ttl     = "0"
     default_ttl = "300"
@@ -102,22 +102,22 @@ data "template_file" "bucket_policy" {
 
   vars {
     origin_access_identity_arn = "${aws_cloudfront_origin_access_identity.origin_access_identity.iam_arn}"
-    bucket                     = "${aws_s3_bucket.www_site.arn}"
+    bucket                     = "${aws_s3_bucket.site.arn}"
   }
 }
 
 resource "aws_s3_bucket_policy" "my_bucket_policy" {
-  bucket = "${aws_s3_bucket.www_site.id}"
+  bucket = "${aws_s3_bucket.site.id}"
   policy = "${data.template_file.bucket_policy.rendered}"
 }
 
-resource "aws_s3_bucket" "www_site" {
-  bucket        = "www.${var.site-name}"
+resource "aws_s3_bucket" "site" {
+  bucket        = "${var.site-name}"
   force_destroy = true
 
   logging {
     target_bucket = "${aws_s3_bucket.logs.bucket}"
-    target_prefix = "www.${var.site-name}/"
+    target_prefix = "${var.site-name}/"
   }
 
   website {
@@ -125,9 +125,9 @@ resource "aws_s3_bucket" "www_site" {
   }
 }
 
-resource "aws_route53_record" "www_site" {
+resource "aws_route53_record" "site" {
   zone_id = "${data.aws_route53_zone.external.zone_id}"
-  name    = "www.${var.site-name}"
+  name    = "${var.site-name}"
   type    = "A"
 
   alias {
