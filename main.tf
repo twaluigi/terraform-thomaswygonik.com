@@ -41,9 +41,9 @@ resource "aws_acm_certificate_validation" "default" {
   ]
 }
 
-resource "aws_cloudfront_origin_access_identity" "origin_access_identity" {
-  comment = "cloudfront origin access identity"
-}
+#resource "aws_cloudfront_origin_access_identity" "origin_access_identity" {
+#  comment = "cloudfront origin access identity"
+#}
 
 resource "aws_cloudfront_distribution" "website_cdn" {
   enabled          = true
@@ -54,11 +54,20 @@ resource "aws_cloudfront_distribution" "website_cdn" {
   comment          = "Managed by Terraform"
 
   origin {
-    origin_id   = "origin-bucket-${aws_s3_bucket.site.id}"
-    domain_name = "${var.site-name}.s3.${var.region}.amazonaws.com"
+    origin_id = "origin-bucket-${aws_s3_bucket.site.id}"
 
-    s3_origin_config {
-      origin_access_identity = "${aws_cloudfront_origin_access_identity.origin_access_identity.cloudfront_access_identity_path}"
+    #domain_name = "${var.site-name}.s3.${var.region}.amazonaws.com"
+    domain_name = "${aws_s3_bucket.site.website_endpoint}"
+
+    #s3_origin_config {
+    #  origin_access_identity = "${aws_cloudfront_origin_access_identity.origin_access_identity.cloudfront_access_identity_path}"
+    #}
+
+    custom_origin_config {
+      http_port              = "80"
+      https_port             = "443"
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.1", "TLSv1.2"]
     }
   }
 
@@ -101,7 +110,7 @@ data "template_file" "bucket_policy" {
   template = "${file("bucket_policy.json")}"
 
   vars {
-    origin_access_identity_arn = "${aws_cloudfront_origin_access_identity.origin_access_identity.iam_arn}"
+    origin_access_identity_arn = "blah"                      #"${aws_cloudfront_origin_access_identity.origin_access_identity.iam_arn}"
     bucket                     = "${aws_s3_bucket.site.arn}"
   }
 }
