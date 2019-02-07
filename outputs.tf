@@ -1,5 +1,5 @@
 output "cert_arn" {
-  value = "${aws_acm_certificate_validation.default.certificate_arn}"
+  value = "${aws_acm_certificate_validation.validate_cert.certificate_arn}"
 }
 
 output "website_url" {

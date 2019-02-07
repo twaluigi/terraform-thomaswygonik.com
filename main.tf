@@ -1,11 +1,69 @@
-provider "aws" {
-  region = "${var.region}"
+# generate a random string to use as a header between S3 and Cloudfront
+resource "random_string" "custom_header_value" {
+  length  = 16
+  special = false
 }
 
-# custom provider for cloudfront ACM certificate - must be in us-east-1
-provider "aws" {
-  region = "us-east-1"
-  alias  = "us-east-1"
+# hosted zone for the domain used by cloudfront
+data "aws_route53_zone" "external" {
+  name         = "${var.hosted-zone-name}"
+  private_zone = false
+}
+
+# zone apex record corresponding to our cloudfront distribution
+resource "aws_route53_record" "A_site" {
+  zone_id = "${data.aws_route53_zone.external.zone_id}"
+  name    = "${var.site-name}"
+  type    = "A"
+
+  alias {
+    name                   = "${aws_cloudfront_distribution.website_cdn.domain_name}"
+    zone_id                = "${aws_cloudfront_distribution.website_cdn.hosted_zone_id}"
+    evaluate_target_health = false
+  }
+}
+
+# zone apex for ipv6 
+resource "aws_route53_record" "AAAA_site" {
+  zone_id = "${data.aws_route53_zone.external.zone_id}"
+  name    = "${var.site-name}"
+  type    = "AAAA"
+
+  alias {
+    name                   = "${aws_cloudfront_distribution.website_cdn.domain_name}"
+    zone_id                = "${aws_cloudfront_distribution.website_cdn.hosted_zone_id}"
+    evaluate_target_health = false
+  }
+}
+
+# bucket policy template to allow Cloudfront to access objects in S3
+data "template_file" "bucket_policy" {
+  template = "${file("bucket_policy.json")}"
+
+  vars {
+    bucket_arn          = "${aws_s3_bucket.site.arn}"
+    custom_header_value = "${random_string.custom_header_value.result}"
+  }
+}
+
+resource "aws_s3_bucket_policy" "my_bucket_policy" {
+  bucket = "${aws_s3_bucket.site.id}"
+  policy = "${data.template_file.bucket_policy.rendered}"
+}
+
+# where the website data goes
+resource "aws_s3_bucket" "site" {
+  bucket        = "${var.site-name}"
+  force_destroy = true
+
+  logging {
+    target_bucket = "${aws_s3_bucket.logs.bucket}"
+    target_prefix = "${var.site-name}/"
+  }
+
+  website {
+    index_document = "index.html"
+  }
 }
 
 # bucket where logs for the website go
@@ -15,46 +73,9 @@ resource "aws_s3_bucket" "logs" {
   force_destroy = true
 }
 
-# the certificate for cloudfront
-resource "aws_acm_certificate" "cert" {
-  provider          = "aws.us-east-1"
-  domain_name       = "${var.site-name}"
-  validation_method = "DNS"
-}
-
-# hosted zone for the domain used by cloudfront
-data "aws_route53_zone" "external" {
-  name         = "${var.hosted-zone-name}"
-  private_zone = false
-}
-
-# validating that we own the domain through route53
-resource "aws_route53_record" "validation" {
-  name    = "${aws_acm_certificate.cert.domain_validation_options.0.resource_record_name}"
-  type    = "${aws_acm_certificate.cert.domain_validation_options.0.resource_record_type}"
-  zone_id = "${data.aws_route53_zone.external.zone_id}"
-  records = ["${aws_acm_certificate.cert.domain_validation_options.0.resource_record_value}"]
-  ttl     = "60"
-}
-
-# once the certificate is validated, we can use it
-resource "aws_acm_certificate_validation" "default" {
-  provider        = "aws.us-east-1"
-  certificate_arn = "${aws_acm_certificate.cert.arn}"
-
-  validation_record_fqdns = [
-    "${aws_route53_record.validation.fqdn}",
-  ]
-}
-
-# generate a random string to use as a header between S3 and Cloudfront
-resource "random_string" "custom_header_value" {
-  length  = 16
-  special = false
-}
-
 resource "aws_cloudfront_distribution" "website_cdn" {
   enabled          = true
+  is_ipv6_enabled  = true
   price_class      = "PriceClass_All"
   http_version     = "http2"
   retain_on_delete = true
@@ -106,6 +127,12 @@ resource "aws_cloudfront_distribution" "website_cdn" {
     }
   }
 
+  logging_config {
+    include_cookies = false
+    bucket          = "${aws_s3_bucket.logs.bucket_domain_name}"
+    prefix          = "cloudfront_${var.site-name}"
+  }
+
   restrictions {
     geo_restriction {
       restriction_type = "none"
@@ -114,50 +141,7 @@ resource "aws_cloudfront_distribution" "website_cdn" {
 
   # use the certificate from the validation earlier
   viewer_certificate {
-    acm_certificate_arn = "${aws_acm_certificate_validation.default.certificate_arn}"
+    acm_certificate_arn = "${aws_acm_certificate_validation.validate_cert.certificate_arn}"
     ssl_support_method  = "sni-only"
-  }
-}
-
-# bucket policy template to allow Cloudfront to access objects in S3
-data "template_file" "bucket_policy" {
-  template = "${file("bucket_policy.json")}"
-
-  vars {
-    bucket_arn          = "${aws_s3_bucket.site.arn}"
-    custom_header_value = "${random_string.custom_header_value.result}"
-  }
-}
-
-resource "aws_s3_bucket_policy" "my_bucket_policy" {
-  bucket = "${aws_s3_bucket.site.id}"
-  policy = "${data.template_file.bucket_policy.rendered}"
-}
-
-# where the website data goes
-resource "aws_s3_bucket" "site" {
-  bucket        = "${var.site-name}"
-  force_destroy = true
-
-  logging {
-    target_bucket = "${aws_s3_bucket.logs.bucket}"
-    target_prefix = "${var.site-name}/"
-  }
-
-  website {
-    index_document = "index.html"
-  }
-}
-
-# zone apex record corresponding to our cloudfront distribution
-resource "aws_route53_record" "site" {
-  zone_id = "${data.aws_route53_zone.external.zone_id}"
-  name    = "${var.site-name}"
-  type    = "A"
-
-  alias {
-    name                   = "${aws_cloudfront_distribution.website_cdn.domain_name}"
-    zone_id                = "${aws_cloudfront_distribution.website_cdn.hosted_zone_id}"
-    evaluate_target_health = false
   }
 }
