@@ -61,6 +61,12 @@ resource "aws_s3_bucket" "site" {
     target_prefix = "${var.site-name}/"
   }
 
+  tags {
+    Name        = "S3_website_${var.site-name}"
+    Project     = "${var.project}"
+    Environment = "${var.environment}"
+  }
+
   website {
     index_document = "index.html"
   }
@@ -71,6 +77,12 @@ resource "aws_s3_bucket" "logs" {
   bucket        = "${var.site-name}-site-logs"
   acl           = "log-delivery-write"
   force_destroy = true
+
+  tags {
+    Name        = "S3_logs_${var.site-name}"
+    Project     = "${var.project}"
+    Environemtn = "${var.environment}"
+  }
 }
 
 resource "aws_cloudfront_distribution" "website_cdn" {
@@ -78,7 +90,7 @@ resource "aws_cloudfront_distribution" "website_cdn" {
   is_ipv6_enabled  = true
   price_class      = "PriceClass_All"
   http_version     = "http2"
-  retain_on_delete = true
+  retain_on_delete = false
   aliases          = ["${var.site-name}"]
   comment          = "Managed by Terraform"
 
@@ -99,12 +111,18 @@ resource "aws_cloudfront_distribution" "website_cdn" {
 
       # S3 websites are http only
       origin_protocol_policy = "http-only"
-      origin_ssl_protocols   = ["TLSv1.1", "TLSv1.2"]
+      origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
 
   # setting root object otherwise some browsers and cache won't know what file to get
   default_root_object = "index.html"
+
+  tags {
+    Name        = "cloudfront_${var.site-name}"
+    Environment = "${var.environment}"
+    Project     = "${var.project}"
+  }
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
@@ -141,7 +159,8 @@ resource "aws_cloudfront_distribution" "website_cdn" {
 
   # use the certificate from the validation earlier
   viewer_certificate {
-    acm_certificate_arn = "${aws_acm_certificate_validation.validate_cert.certificate_arn}"
-    ssl_support_method  = "sni-only"
+    acm_certificate_arn      = "${aws_acm_certificate_validation.validate_cert.certificate_arn}"
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2018"
   }
 }
