@@ -9,3 +9,15 @@ variable "environment" {} # tag for the environment
 variable "region" {
   default = "us-east-2"
 }
+
+variable "github-owner" {}
+
+variable "github-repo" {}
+
+variable "github-branch" {}
+
+variable "poll-source-changes" {}
+
+variable "github-oauth-token" {}
+
+variable "short-site-name" {}
