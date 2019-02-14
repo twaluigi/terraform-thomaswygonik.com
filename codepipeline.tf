@@ -83,7 +83,7 @@ resource "aws_codepipeline" "site-pipeline" {
       owner            = "ThirdParty"
       provider         = "GitHub"
       version          = "1"
-      output_artifacts = ["${var.site-name}-source-artifacts"]
+      output_artifacts = ["${var.short-site-name}-source-artifacts"]
 
       configuration = {
         OAuthToken           = "${var.github-oauth-token}"
@@ -103,7 +103,7 @@ resource "aws_codepipeline" "site-pipeline" {
       category        = "Build"
       owner           = "AWS"
       provider        = "CodeBuild"
-      input_artifacts = ["${var.site-name}-source-artifacts"]
+      input_artifacts = ["${var.short-site-name}-source-artifacts"]
       version         = "1"
 
       configuration = {
