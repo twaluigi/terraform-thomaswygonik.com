@@ -209,6 +209,7 @@ resource "aws_codebuild_project" "site-build" {
     type      = "CODEPIPELINE"
     buildspec = "buildspec.yml"
   }
+
   tags {
     Name        = "CodeBuild-${var.site-name}"
     Project     = "${var.project}"

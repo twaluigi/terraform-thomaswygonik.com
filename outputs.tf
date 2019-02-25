@@ -1,3 +1,3 @@
 output "site-address" {
-value = "https://${var.site-name}"
+  value = "https://${var.site-name}"
 }
