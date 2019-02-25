@@ -7,4 +7,9 @@
 
 # .tfvars files
 *.tfvars
+
+# Crash Log
 crash.log
+
+# plan outputs
+*.out 
