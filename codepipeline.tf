@@ -36,7 +36,8 @@ resource "aws_iam_role_policy" "codepipeline_policy" {
       "Action": [
         "s3:GetObject",
         "s3:GetObjectVersion",
-        "s3:GetBucketVersioning"
+        "s3:GetBucketVersioning",
+        "s3:PutObject"
       ],
       "Resource": [
         "${aws_s3_bucket.codepipeline_artifacts.arn}",
@@ -107,7 +108,7 @@ resource "aws_codepipeline" "site-pipeline" {
       version         = "1"
 
       configuration = {
-        ProjectName = "${var.site-name}-build"
+        ProjectName = "${var.short-site-name}_build"
       }
     }
   }
@@ -153,7 +154,12 @@ resource "aws_iam_role_policy" "codebuild_policy" {
       "Action": [
         "logs:CreateLogGroup",
         "logs:CreateLogStream",
-        "logs:PutLogEvents"
+        "logs:PutLogEvents",
+        "s3:GetObject",
+        "s3:GetObjectVersion",
+        "s3:GetBucketVersioning",
+        "s3:PutObject"
+        
       ]
     },
     {
@@ -163,7 +169,9 @@ resource "aws_iam_role_policy" "codebuild_policy" {
       ],
       "Resource": [
         "${aws_s3_bucket.codebuild_cache.arn}",
-        "${aws_s3_bucket.codebuild_cache.arn}/*"
+        "${aws_s3_bucket.codebuild_cache.arn}/*",
+        "${aws_s3_bucket.site.arn}",
+        "${aws_s3_bucket.site.arn}/*"
       ]
     }
   ]
@@ -190,10 +198,20 @@ resource "aws_codebuild_project" "site-build" {
     compute_type = "BUILD_GENERAL1_SMALL"
     image        = "aws/codebuild/ruby:2.5.3"
     type         = "LINUX_CONTAINER"
+
+    environment_variable {
+      "name"  = "SITE_NAME"
+      "value" = "${aws_s3_bucket.site.id}"
+    }
   }
 
   source {
     type      = "CODEPIPELINE"
     buildspec = "buildspec.yml"
+  }
+  tags {
+    Name        = "CodeBuild-${var.site-name}"
+    Project     = "${var.project}"
+    Environment = "${var.environment}"
   }
 }

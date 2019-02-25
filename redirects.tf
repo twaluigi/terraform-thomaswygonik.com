@@ -1,7 +1,5 @@
 # website redirects
-
 ################### USING CLOUDFRONT ############################
-
 resource "aws_s3_bucket" "redirect_www" {
   bucket = "www.${var.site-name}"
   acl    = "private"
@@ -84,14 +82,12 @@ resource "aws_cloudfront_distribution" "redirect_www_distribution" {
   comment          = "Managed by Terraform"
 
   default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "origin-bucket-${aws_s3_bucket.redirect_www.id}"
-
-    min_ttl     = "0"
-    default_ttl = "300"
-    max_ttl     = "1200"
-
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "origin-bucket-${aws_s3_bucket.redirect_www.id}"
+    min_ttl                = "0"
+    default_ttl            = "300"
+    max_ttl                = "1200"
     viewer_protocol_policy = "redirect-to-https"
     compress               = true
 
@@ -236,14 +232,12 @@ resource "aws_cloudfront_distribution" "redirect_blog_distribution" {
   comment          = "Managed by Terraform"
 
   default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "origin-bucket-${aws_s3_bucket.redirect_blog.id}"
-
-    min_ttl     = "0"
-    default_ttl = "300"
-    max_ttl     = "1200"
-
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "origin-bucket-${aws_s3_bucket.redirect_blog.id}"
+    min_ttl                = "0"
+    default_ttl            = "300"
+    max_ttl                = "1200"
     viewer_protocol_policy = "redirect-to-https"
     compress               = true
 

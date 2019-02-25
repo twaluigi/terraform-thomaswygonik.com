@@ -1,5 +1,4 @@
 # certificates 
-
 # the certificate for cloudfront
 resource "aws_acm_certificate" "cert" {
   provider          = "aws.us-east-1"

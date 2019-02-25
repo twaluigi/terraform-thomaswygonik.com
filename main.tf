@@ -81,7 +81,7 @@ resource "aws_s3_bucket" "logs" {
   tags {
     Name        = "S3_logs_${var.site-name}"
     Project     = "${var.project}"
-    Environemtn = "${var.environment}"
+    Environment = "${var.environment}"
   }
 }
 
@@ -125,14 +125,12 @@ resource "aws_cloudfront_distribution" "website_cdn" {
   }
 
   default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "origin-bucket-${aws_s3_bucket.site.id}"
-
-    min_ttl     = "0"
-    default_ttl = "300"
-    max_ttl     = "1200"
-
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "origin-bucket-${aws_s3_bucket.site.id}"
+    min_ttl                = "0"
+    default_ttl            = "300"
+    max_ttl                = "1200"
     viewer_protocol_policy = "redirect-to-https"
     compress               = true
 
