@@ -200,8 +200,8 @@ resource "aws_codebuild_project" "site-build" {
     type         = "LINUX_CONTAINER"
 
     environment_variable {
-      "name"  = "SITE_NAME"
-      "value" = "${aws_s3_bucket.site.id}"
+      name  = "SITE_NAME"
+      value = "${aws_s3_bucket.site.id}"
     }
   }
 
@@ -210,7 +210,7 @@ resource "aws_codebuild_project" "site-build" {
     buildspec = "buildspec.yml"
   }
 
-  tags {
+  tags = {
     Name        = "CodeBuild-${var.site-name}"
     Project     = "${var.project}"
     Environment = "${var.environment}"

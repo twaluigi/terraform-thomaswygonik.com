@@ -38,9 +38,8 @@ resource "aws_route53_record" "AAAA_site" {
 
 # bucket policy template to allow Cloudfront to access objects in S3
 data "template_file" "bucket_policy" {
-  template = "${file("bucket_policy.json")}"
-
-  vars {
+  template = "${file("${path.module}/bucket_policy.json")}"
+  vars = {
     bucket_arn          = "${aws_s3_bucket.site.arn}"
     custom_header_value = "${random_string.custom_header_value.result}"
   }
@@ -61,7 +60,7 @@ resource "aws_s3_bucket" "site" {
     target_prefix = "${var.site-name}/"
   }
 
-  tags {
+  tags = {
     Name        = "S3_website_${var.site-name}"
     Project     = "${var.project}"
     Environment = "${var.environment}"
@@ -78,7 +77,7 @@ resource "aws_s3_bucket" "logs" {
   acl           = "log-delivery-write"
   force_destroy = true
 
-  tags {
+  tags = {
     Name        = "S3_logs_${var.site-name}"
     Project     = "${var.project}"
     Environment = "${var.environment}"
@@ -100,10 +99,13 @@ resource "aws_cloudfront_distribution" "website_cdn" {
     domain_name = "${aws_s3_bucket.site.website_endpoint}"
 
     # header that allows only this Cloudfront distribution to access objects in S3
-    custom_header = {
+
+    custom_header {
       name  = "User-Agent"
       value = "${random_string.custom_header_value.result}"
     }
+
+
 
     custom_origin_config {
       http_port  = "80"
@@ -118,7 +120,7 @@ resource "aws_cloudfront_distribution" "website_cdn" {
   # setting root object otherwise some browsers and cache won't know what file to get
   default_root_object = "index.html"
 
-  tags {
+  tags = {
     Name        = "cloudfront_${var.site-name}"
     Environment = "${var.environment}"
     Project     = "${var.project}"

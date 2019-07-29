@@ -7,7 +7,7 @@ variable "project" {} # tag for project name
 variable "environment" {} # tag for the environment
 
 variable "region" {
-  default = "us-east-2"
+  default = "us-west-2"
 }
 
 variable "github-owner" {}
