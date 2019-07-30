@@ -5,36 +5,7 @@ resource "random_string" "custom_header_value" {
 }
 
 # hosted zone for the domain used by cloudfront
-data "aws_route53_zone" "external" {
-  name         = "${var.hosted-zone-name}"
-  private_zone = false
-}
 
-# zone apex record corresponding to our cloudfront distribution
-resource "aws_route53_record" "A_site" {
-  zone_id = "${data.aws_route53_zone.external.zone_id}"
-  name    = "${var.site-name}"
-  type    = "A"
-
-  alias {
-    name                   = "${aws_cloudfront_distribution.website_cdn.domain_name}"
-    zone_id                = "${aws_cloudfront_distribution.website_cdn.hosted_zone_id}"
-    evaluate_target_health = false
-  }
-}
-
-# zone apex for ipv6 
-resource "aws_route53_record" "AAAA_site" {
-  zone_id = "${data.aws_route53_zone.external.zone_id}"
-  name    = "${var.site-name}"
-  type    = "AAAA"
-
-  alias {
-    name                   = "${aws_cloudfront_distribution.website_cdn.domain_name}"
-    zone_id                = "${aws_cloudfront_distribution.website_cdn.hosted_zone_id}"
-    evaluate_target_health = false
-  }
-}
 
 # bucket policy template to allow Cloudfront to access objects in S3
 data "template_file" "bucket_policy" {
