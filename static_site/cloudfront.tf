@@ -12,13 +12,13 @@ resource "aws_cloudfront_distribution" "website_cdn" {
   price_class      = "PriceClass_All"
   http_version     = "http2"
   retain_on_delete = false
-  aliases          = ["${var.site-name}"]
+  aliases          = ["${var.site_fqdn}"]
   comment          = "Managed by Terraform"
 
   # custom origin configuration using S3 website
   origin {
-    origin_id   = "origin-bucket-${aws_s3_bucket.site.id}"
-    domain_name = "${aws_s3_bucket.site.website_endpoint}"
+    origin_id   = "origin-bucket-${aws_s3_bucket.site_bucket.id}"
+    domain_name = "${aws_s3_bucket.site_bucket.website_endpoint}"
 
     # header that allows only this Cloudfront distribution to access objects in S3
 
@@ -43,7 +43,7 @@ resource "aws_cloudfront_distribution" "website_cdn" {
   default_root_object = "index.html"
 
   tags = {
-    Name        = "cloudfront_${var.site-name}"
+    Name        = "cloudfront_${var.site_fqdn}"
     Environment = "${var.environment}"
     Project     = "${var.project}"
   }
@@ -51,7 +51,7 @@ resource "aws_cloudfront_distribution" "website_cdn" {
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "origin-bucket-${aws_s3_bucket.site.id}"
+    target_origin_id       = "origin-bucket-${aws_s3_bucket.site_bucket.id}"
     min_ttl                = "0"
     default_ttl            = "300"
     max_ttl                = "1200"
@@ -69,8 +69,8 @@ resource "aws_cloudfront_distribution" "website_cdn" {
 
   logging_config {
     include_cookies = false
-    bucket          = "${aws_s3_bucket.logs.bucket_domain_name}"
-    prefix          = "cloudfront_${var.site-name}"
+    bucket          = "${aws_s3_bucket.log_bucket.bucket_domain_name}"
+    prefix          = "cloudfront_${var.site_fqdn}"
   }
 
   restrictions {
@@ -81,7 +81,7 @@ resource "aws_cloudfront_distribution" "website_cdn" {
 
   # use the certificate from the validation earlier
   viewer_certificate {
-    acm_certificate_arn      = "${aws_acm_certificate_validation.validate_cert.certificate_arn}"
+    acm_certificate_arn      = "${aws_acm_certificate_validation.validate_website_cert.certificate_arn}"
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.2_2018"
   }
@@ -91,8 +91,8 @@ resource "aws_cloudfront_distribution" "website_cdn" {
 resource "aws_cloudfront_distribution" "redirect_www_distribution" {
   provider = "aws.site_account"
   origin {
-    domain_name = "${aws_s3_bucket.redirect_www.website_endpoint}"
-    origin_id   = "origin-bucket-${aws_s3_bucket.redirect_www.id}"
+    domain_name = "${aws_s3_bucket.redirect_www_bucket.website_endpoint}"
+    origin_id   = "origin-bucket-${aws_s3_bucket.redirect_www_bucket.id}"
 
     custom_origin_config {
       http_port              = "80"
@@ -107,13 +107,13 @@ resource "aws_cloudfront_distribution" "redirect_www_distribution" {
   price_class      = "PriceClass_All"
   http_version     = "http2"
   retain_on_delete = false
-  aliases          = ["www.${var.site-name}"]
+  aliases          = ["www.${var.site_fqdn}"]
   comment          = "Managed by Terraform"
 
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "origin-bucket-${aws_s3_bucket.redirect_www.id}"
+    target_origin_id       = "origin-bucket-${aws_s3_bucket.redirect_www_bucket.id}"
     min_ttl                = "0"
     default_ttl            = "300"
     max_ttl                = "1200"
@@ -131,8 +131,8 @@ resource "aws_cloudfront_distribution" "redirect_www_distribution" {
 
   logging_config {
     include_cookies = false
-    bucket          = "${aws_s3_bucket.logs.bucket_domain_name}"
-    prefix          = "cloudfront_www.${var.site-name}"
+    bucket          = "${aws_s3_bucket.log_bucket.bucket_domain_name}"
+    prefix          = "cloudfront_www.${var.site_fqdn}"
   }
 
   restrictions {
@@ -142,14 +142,14 @@ resource "aws_cloudfront_distribution" "redirect_www_distribution" {
   }
 
   tags = {
-    Name        = "cloudfront_www_redirect_${var.site-name}"
+    Name        = "cloudfront_www_redirect_${var.site_fqdn}"
     Environment = "${var.environment}"
     Project     = "${var.project}"
   }
 
   # use the certificate from the validation earlier
   viewer_certificate {
-    acm_certificate_arn      = "${aws_acm_certificate_validation.www_validate_cert.certificate_arn}"
+    acm_certificate_arn      = "${aws_acm_certificate_validation.validate_www_redirect_cert.certificate_arn}"
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.2_2018"
   }
@@ -158,8 +158,8 @@ resource "aws_cloudfront_distribution" "redirect_www_distribution" {
 resource "aws_cloudfront_distribution" "redirect_blog_distribution" {
   provider = "aws.site_account"
   origin {
-    domain_name = "${aws_s3_bucket.redirect_blog.website_endpoint}"
-    origin_id   = "origin-bucket-${aws_s3_bucket.redirect_blog.id}"
+    domain_name = "${aws_s3_bucket.redirect_blog_bucket.website_endpoint}"
+    origin_id   = "origin-bucket-${aws_s3_bucket.redirect_blog_bucket.id}"
 
     custom_origin_config {
       http_port              = "80"
@@ -174,13 +174,13 @@ resource "aws_cloudfront_distribution" "redirect_blog_distribution" {
   price_class      = "PriceClass_All"
   http_version     = "http2"
   retain_on_delete = false
-  aliases          = ["blog.${var.site-name}"]
+  aliases          = ["blog.${var.site_fqdn}"]
   comment          = "Managed by Terraform"
 
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "origin-bucket-${aws_s3_bucket.redirect_blog.id}"
+    target_origin_id       = "origin-bucket-${aws_s3_bucket.redirect_blog_bucket.id}"
     min_ttl                = "0"
     default_ttl            = "300"
     max_ttl                = "1200"
@@ -198,8 +198,8 @@ resource "aws_cloudfront_distribution" "redirect_blog_distribution" {
 
   logging_config {
     include_cookies = false
-    bucket          = "${aws_s3_bucket.logs.bucket_domain_name}"
-    prefix          = "cloudfront_blog.${var.site-name}"
+    bucket          = "${aws_s3_bucket.log_bucket.bucket_domain_name}"
+    prefix          = "cloudfront_blog.${var.site_fqdn}"
   }
 
   restrictions {
@@ -209,14 +209,14 @@ resource "aws_cloudfront_distribution" "redirect_blog_distribution" {
   }
 
   tags = {
-    Name        = "cloudfront_blog_redirect_${var.site-name}"
+    Name        = "cloudfront_blog_redirect_${var.site_fqdn}"
     Environment = "${var.environment}"
     Project     = "${var.project}"
   }
 
   # use the certificate from the validation earlier
   viewer_certificate {
-    acm_certificate_arn      = "${aws_acm_certificate_validation.blog_validate_cert.certificate_arn}"
+    acm_certificate_arn      = "${aws_acm_certificate_validation.validate_blog_redirect_cert.certificate_arn}"
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1.2_2018"
   }

@@ -12,7 +12,7 @@ provider "aws" {
   region  = "us-east-1"
   alias   = "site_account_us-east-1"
   assume_role {
-    role_arn = "arn:aws:iam::635034909178:role/dev_terraform_role"
+    role_arn = "${var.site_account_role_arn}"
   }
 }
 
@@ -22,7 +22,7 @@ provider "aws" {
   region  = "${var.region}"
   alias   = "site_account"
   assume_role {
-    role_arn = "arn:aws:iam::635034909178:role/dev_terraform_role"
+    role_arn = "${var.site_account_role_arn}"
   }
 }
 

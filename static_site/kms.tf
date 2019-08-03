@@ -1,6 +1,6 @@
 resource "aws_s3_bucket" "codepipeline_artifacts" {
   provider      = "aws.site_account"
-  bucket        = "${var.site-name}-codepipeline-artifacts"
+  bucket        = "${var.site_fqdn}-codepipeline-artifacts"
   acl           = "private"
   force_destroy = true
 }

@@ -1,6 +1,6 @@
-variable "site-name" {} # the FQDN of the website
+variable "site_fqdn" {} # the FQDN of the website
 
-variable "hosted-zone-name" {} # hosted zone for the website
+variable "hosted_zone_name" {} # hosted zone for the website
 
 variable "project" {} # tag for project name
 
@@ -10,14 +10,9 @@ variable "region" {
   default = "us-west-2"
 }
 
-variable "github-owner" {}
+variable "short_site_fqdn" {}
 
-variable "github-repo" {}
 
-variable "github-branch" {}
+variable "site_account_role_arn" {}
 
-variable "poll-source-changes" {}
-
-variable "github-oauth-token" {}
-
-variable "short-site-name" {}
+variable "ci_user_arn" {}
