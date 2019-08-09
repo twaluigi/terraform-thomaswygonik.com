@@ -14,6 +14,12 @@ resource "aws_cloudfront_distribution" "website_cdn" {
   retain_on_delete = false
   aliases          = ["${var.site_fqdn}"]
   comment          = "Managed by Terraform"
+  custom_error_response {
+    error_caching_min_ttl = 300
+    error_code            = 404
+    response_code         = 404
+    response_page_path    = "/404.html"
+  }
 
   # custom origin configuration using S3 website
   origin {

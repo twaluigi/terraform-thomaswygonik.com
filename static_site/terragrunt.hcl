@@ -1,11 +1,11 @@
 remote_state {
     backend = "s3" 
     config = {
-        bucket = "thomaswygonik-root-state-store"
-        key = "dev/static_site/terraform.tfstate"
-        region = "us-west-2"
+        bucket = "${get_env("STATE_BUCKET", "")}"
+        key = "${get_env("STATE_KEY", "")}"
+        region = "${get_env("AWS_REGION", "us-west-2")}"
+        dynamodb_table = "${get_env("STATE_TABLE", "")}"
         encrypt = true
-        dynamodb_table = "terraform-state-lock"
         skip_bucket_accesslogging      = true
     }
 }

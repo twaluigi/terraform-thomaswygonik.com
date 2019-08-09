@@ -1,18 +1,26 @@
-variable "site_fqdn" {} # the FQDN of the website
+# FQDN of the website
+variable "site_fqdn" {}
 
-variable "hosted_zone_name" {} # hosted zone for the website
+# Route53 hosted zone for the website fqdn
+variable "hosted_zone_name" {}
 
-variable "project" {} # tag for project name
+# Value for the tag key Project
+variable "project" {}
 
-variable "environment" {} # tag for the environment
+# Value for tag key Environment
+variable "environment" {}
 
+# Region where site resources should be created
 variable "region" {
   default = "us-west-2"
 }
 
-variable "short_site_fqdn" {}
-
-
+# Role to assume in the site account
 variable "site_account_role_arn" {}
 
+# ARN for CI user
 variable "ci_user_arn" {}
+
+variable "master_account_number" {}
+
+variable "site_account_number" {}

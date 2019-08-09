@@ -1,0 +1,49 @@
+image: registry.gitlab.com/twaluigi/terraform-tomwygonik-website/terragrunt:latest
+
+stages:
+  - init
+  - validate
+  - plan
+  - apply
+
+variables:
+  STATE_BUCKET: ${STATE_BUCKET}
+  STATE_KEY: ${STATE_KEY}
+  STATE_TABLE: ${STATE_TABLE}
+  TFVARS_FILE: ${TFVARS_FILE}
+
+init:
+  stage: init
+  script:
+    - terragrunt init --terragrunt-config static_site/terragrunt.hcl --terragrunt-working-dir static_site 
+  cache:
+    paths:
+      - static_site/.terraform
+
+validate:
+  stage: validate
+  script:
+    - terragrunt validate --terragrunt-config static_site/terragrunt.hcl --terragrunt-working-dir static_site
+  cache:
+    paths:
+      - static_site/.terraform
+
+plan:
+  stage: plan
+  script: 
+    - terragrunt plan --terragrunt-config static_site/terragrunt.hcl --terragrunt-working-dir static_site -out=plan_out.tfstate -var-file="${TFVARS_FILE}"
+  cache:
+    paths:
+      - static_site/.terraform
+      - static_site/plan_out.tfstate
+
+apply:
+  stage: apply
+  script:
+    - terragrunt apply --terragrunt-config static_site/terragrunt.hcl --terragrunt-working-dir static_site plan_out.tfstate
+  dependencies:
+    - plan
+  cache:
+    paths:
+      - static_site/.terraform
+      - static_site/plan_out.tfstate

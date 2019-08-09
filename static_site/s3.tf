@@ -31,8 +31,8 @@ resource "aws_s3_bucket" "redirect_blog_bucket" {
 
 resource "aws_s3_bucket" "redirect_www_bucket" {
   provider = "aws.site_account"
-  bucket = "www.${var.site_fqdn}"
-  acl = "private"
+  bucket   = "www.${var.site_fqdn}"
+  acl      = "private"
 
   logging {
     target_bucket = "${aws_s3_bucket.log_bucket.bucket}"
@@ -40,8 +40,8 @@ resource "aws_s3_bucket" "redirect_www_bucket" {
   }
 
   tags = {
-    Name = "S3_www_redirect_${var.site_fqdn}"
-    Project = "${var.project}"
+    Name        = "S3_www_redirect_${var.site_fqdn}"
+    Project     = "${var.project}"
     Environment = "${var.environment}"
   }
 
@@ -62,10 +62,11 @@ resource "aws_s3_bucket" "redirect_www_bucket" {
 
 # bucket policy template to allow Cloudfront to access objects in S3
 data "template_file" "bucket_policy" {
-  template = "${file("${path.module}/bucket_policies/site_bucket_policy.json")}"
+  template = "${file("${path.module}/policies/resource_based/site_bucket_policy.json")}"
   vars = {
     bucket_arn          = "${aws_s3_bucket.site_bucket.arn}"
     custom_header_value = "${random_string.custom_header_value.result}"
+    ci_s3_site_role_arn = "${aws_iam_role.ci_s3_site_role.arn}"
   }
 }
 
@@ -77,9 +78,8 @@ resource "aws_s3_bucket_policy" "site_bucket_policy" {
 
 # where the website data goes
 resource "aws_s3_bucket" "site_bucket" {
-  provider      = "aws.site_account"
-  bucket        = "${var.site_fqdn}"
-  force_destroy = true
+  provider = "aws.site_account"
+  bucket   = "${var.site_fqdn}"
 
   logging {
     target_bucket = "${aws_s3_bucket.log_bucket.bucket}"
@@ -94,15 +94,15 @@ resource "aws_s3_bucket" "site_bucket" {
 
   website {
     index_document = "index.html"
+    error_document = "404.html"
   }
 }
 
 # bucket where logs for the website go
 resource "aws_s3_bucket" "log_bucket" {
-  provider      = "aws.site_account"
-  bucket        = "${var.site_fqdn}-site-logs"
-  acl           = "log-delivery-write"
-  force_destroy = true
+  provider = "aws.site_account"
+  bucket   = "${var.site_fqdn}-site-logs"
+  acl      = "log-delivery-write"
 
   tags = {
     Name        = "S3_logs_${var.site_fqdn}"
