@@ -31,19 +31,19 @@ validate:
 plan:
   stage: plan
   script: 
-    - terragrunt plan --terragrunt-config static_site/terragrunt.hcl --terragrunt-working-dir static_site -out=plan_out.tfstate -var-file="${TFVARS_FILE}"
+    - terragrunt plan --terragrunt-config static_site/terragrunt.hcl --terragrunt-working-dir static_site -out=terraform.tfplan -var-file="${TFVARS_FILE}"
   cache:
     paths:
       - static_site/.terraform
-      - static_site/plan_out.tfstate
+      - static_site/terraform.tfplan
 
 apply:
   stage: apply
   script:
-    - terragrunt apply --terragrunt-config static_site/terragrunt.hcl --terragrunt-working-dir static_site plan_out.tfstate
+    - terragrunt apply --terragrunt-config static_site/terragrunt.hcl --terragrunt-working-dir static_site terraform.tfplan
   dependencies:
     - plan
   cache:
     paths:
       - static_site/.terraform
-      - static_site/plan_out.tfstate
+      - static_site/terraform.tfplan
