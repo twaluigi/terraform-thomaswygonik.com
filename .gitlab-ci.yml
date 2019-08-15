@@ -1,4 +1,4 @@
-image: registry.gitlab.com/twaluigi/terraform-tomwygonik-website/terragrunt:latest
+image: registry.gitlab.com/twaluigi/ci-images/terragrunt:0.19.19
 
 stages:
   - init
